@@ -20,6 +20,8 @@
 #include <Device.h>
 #include <InputDevice.h>
 #include <util/log.h>
+#include <features/HapticFeedback.h>
+#include <util/task.h>
 
 using namespace logid::actions;
 
@@ -83,6 +85,7 @@ void AxisGesture::move(int16_t axis) {
     int hires_remainder = _hires_remainder;
 
     if (new_axis > threshold) {
+        bool first_crossing = _axis < threshold;
         double move = axis;
         if (_axis < threshold)
             move = new_axis - threshold;
@@ -120,6 +123,20 @@ void AxisGesture::move(int16_t axis) {
             _hires_remainder = hires_remainder;
         } else {
             _device->virtualInput()->moveAxis(_input_axis.value(), (int) move_floor);
+        }
+        // Play haptic asynchronously after axis movement to avoid blocking
+        if (first_crossing && _config.haptic_effect.has_value()) {
+            auto effect = _config.haptic_effect.value();
+            run_task([device = _device, effect] {
+                try {
+                    auto haptic = device->getFeature<features::HapticFeedback>("hapticfeedback");
+                    if (haptic) {
+                        haptic->playEffect(effect);
+                    }
+                } catch (...) {
+                    // Haptic feedback not supported, ignore
+                }
+            });
         }
     }
     _axis = new_axis;

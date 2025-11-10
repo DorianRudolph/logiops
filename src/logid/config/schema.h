@@ -146,12 +146,14 @@ namespace logid::config {
         std::optional<int> threshold;
         std::optional<std::variant<std::string, uint>> axis;
         std::optional<double> axis_multiplier;
+        std::optional<int> haptic_effect;
 
         AxisGesture() : signed_group("mode", "Axis",
-                                     {"threshold", "axis", "axis_multiplier"},
+                                     {"threshold", "axis", "axis_multiplier", "haptic_effect"},
                                      &AxisGesture::threshold,
                                      &AxisGesture::axis,
-                                     &AxisGesture::axis_multiplier) {}
+                                     &AxisGesture::axis_multiplier,
+                                     &AxisGesture::haptic_effect) {}
     };
 
     struct IntervalGesture : public signed_group<std::string> {
@@ -159,13 +161,15 @@ namespace logid::config {
         std::optional<int> threshold;
         std::optional<BasicAction> action;
         std::optional<int> interval;
+        std::optional<int> haptic_effect;
     protected:
         explicit IntervalGesture(const std::string& name) : signed_group(
                 "mode", name,
-                {"threshold", "action", "interval"},
+                {"threshold", "action", "interval", "haptic_effect"},
                 &IntervalGesture::threshold,
                 &IntervalGesture::action,
-                &IntervalGesture::interval) {}
+                &IntervalGesture::interval,
+                &IntervalGesture::haptic_effect) {}
 
     public:
         IntervalGesture() : IntervalGesture("OnInterval") {}
@@ -179,22 +183,26 @@ namespace logid::config {
         typedef actions::ReleaseGesture gesture;
         std::optional<int> threshold;
         std::optional<BasicAction> action;
+        std::optional<int> haptic_effect;
 
         ReleaseGesture() : signed_group("mode", "OnRelease",
-                                        {"threshold", "action"},
+                                        {"threshold", "action", "haptic_effect"},
                                         &ReleaseGesture::threshold,
-                                        &ReleaseGesture::action) {}
+                                        &ReleaseGesture::action,
+                                        &ReleaseGesture::haptic_effect) {}
     };
 
     struct ThresholdGesture : public signed_group<std::string> {
         typedef actions::ThresholdGesture gesture;
         std::optional<int> threshold;
         std::optional<BasicAction> action;
+        std::optional<int> haptic_effect;
 
         ThresholdGesture() : signed_group("mode", "OnThreshold",
-                                          {"threshold", "action"},
+                                          {"threshold", "action", "haptic_effect"},
                                           &ThresholdGesture::threshold,
-                                          &ThresholdGesture::action) {}
+                                          &ThresholdGesture::action,
+                                          &ThresholdGesture::haptic_effect) {}
     };
 
     struct NoGesture : public signed_group<std::string> {

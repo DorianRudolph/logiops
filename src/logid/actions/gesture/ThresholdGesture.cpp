@@ -18,6 +18,9 @@
 #include <actions/gesture/ThresholdGesture.h>
 #include <Configuration.h>
 #include <util/log.h>
+#include <features/HapticFeedback.h>
+#include <Device.h>
+#include <util/task.h>
 
 using namespace logid::actions;
 
@@ -61,6 +64,21 @@ void ThresholdGesture::move(int16_t axis) {
         if (_action) {
             _action->press();
             _action->release();
+        }
+        // Play haptic asynchronously after action to avoid blocking
+        std::shared_lock lock(_config_mutex);
+        if (_config.haptic_effect.has_value()) {
+            auto effect = _config.haptic_effect.value();
+            run_task([device = _device, effect] {
+                try {
+                    auto haptic = device->getFeature<features::HapticFeedback>("hapticfeedback");
+                    if (haptic) {
+                        haptic->playEffect(effect);
+                    }
+                } catch (...) {
+                    // Haptic feedback not supported, ignore
+                }
+            });
         }
         this->_executed = true;
     }

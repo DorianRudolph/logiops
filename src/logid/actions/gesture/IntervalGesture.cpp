@@ -18,6 +18,9 @@
 #include <actions/gesture/IntervalGesture.h>
 #include <Configuration.h>
 #include <util/log.h>
+#include <features/HapticFeedback.h>
+#include <Device.h>
+#include <util/task.h>
 
 using namespace logid::actions;
 
@@ -75,6 +78,21 @@ void IntervalGesture::move(int16_t axis) {
         if (_action) {
             _action->press();
             _action->release();
+        }
+        // Play haptic asynchronously after action to avoid blocking
+        // Only on the first interval to avoid interrupting continuous actions
+        if (_interval_pass_count == 0 && _config.haptic_effect.has_value()) {
+            auto effect = _config.haptic_effect.value();
+            run_task([device = _device, effect] {
+                try {
+                    auto haptic = device->getFeature<features::HapticFeedback>("hapticfeedback");
+                    if (haptic) {
+                        haptic->playEffect(effect);
+                    }
+                } catch (...) {
+                    // Haptic feedback not supported, ignore
+                }
+            });
         }
     }
     _interval_pass_count = new_interval_count;
