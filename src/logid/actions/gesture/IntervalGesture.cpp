@@ -21,6 +21,7 @@
 #include <features/HapticFeedback.h>
 #include <Device.h>
 #include <util/task.h>
+#include <InputDevice.h>
 
 using namespace logid::actions;
 
@@ -39,12 +40,52 @@ IntervalGesture::IntervalGesture(
                 {},
                 {}
         }),
-        _axis(0), _interval_pass_count(0), _config(config) {
+        _axis(0), _interval_pass_count(0), _config(config), _hold_keys_pressed(false) {
     if (config.action) {
         try {
             _action = Action::makeAction(device, config.action.value(), _node);
         } catch (InvalidAction& e) {
             logPrintf(WARN, "Mapping gesture to invalid action");
+        }
+    }
+
+    // Parse hold_keys configuration
+    if (_config.hold_keys.has_value()) {
+        auto& hold_config = _config.hold_keys.value();
+        if (std::holds_alternative<std::string>(hold_config)) {
+            const auto& key = std::get<std::string>(hold_config);
+            try {
+                auto code = _device->virtualInput()->toKeyCode(key);
+                _device->virtualInput()->registerKey(code);
+                _hold_keys.emplace_back(code);
+            } catch (InputDevice::InvalidEventCode& e) {
+                logPrintf(WARN, "Invalid hold keycode %s, skipping.", key.c_str());
+            }
+        } else if (std::holds_alternative<uint>(hold_config)) {
+            const auto& key = std::get<uint>(hold_config);
+            _device->virtualInput()->registerKey(key);
+            _hold_keys.emplace_back(key);
+        } else if (std::holds_alternative<
+                std::list<std::variant<uint, std::string>>>(hold_config)) {
+            const auto& keys = std::get<
+                    std::list<std::variant<uint, std::string>>>(hold_config);
+            for (const auto& key: keys) {
+                if (std::holds_alternative<std::string>(key)) {
+                    const auto& key_str = std::get<std::string>(key);
+                    try {
+                        auto code = _device->virtualInput()->toKeyCode(key_str);
+                        _device->virtualInput()->registerKey(code);
+                        _hold_keys.emplace_back(code);
+                    } catch (InputDevice::InvalidEventCode& e) {
+                        logPrintf(WARN, "Invalid hold keycode %s, skipping.",
+                                  key_str.c_str());
+                    }
+                } else if (std::holds_alternative<uint>(key)) {
+                    auto& code = std::get<uint>(key);
+                    _device->virtualInput()->registerKey(code);
+                    _hold_keys.emplace_back(code);
+                }
+            }
         }
     }
 }
@@ -57,9 +98,16 @@ void IntervalGesture::press(bool init_threshold) {
         _axis = 0;
     }
     _interval_pass_count = 0;
+    _hold_keys_pressed = false;
 }
 
 void IntervalGesture::release([[maybe_unused]] bool primary) {
+    // Release the hold_keys only if they were pressed
+    if (_hold_keys_pressed) {
+        for (auto& key: _hold_keys)
+            _device->virtualInput()->releaseKey(key);
+        _hold_keys_pressed = false;
+    }
 }
 
 void IntervalGesture::move(int16_t axis) {
@@ -72,6 +120,13 @@ void IntervalGesture::move(int16_t axis) {
     _axis += axis;
     if (_axis < threshold)
         return;
+
+    // Press hold_keys when threshold is first crossed
+    if (!_hold_keys_pressed && !_hold_keys.empty()) {
+        for (auto& key: _hold_keys)
+            _device->virtualInput()->pressKey(key);
+        _hold_keys_pressed = true;
+    }
 
     int32_t new_interval_count = (_axis - threshold) / _config.interval.value();
     if (new_interval_count > _interval_pass_count) {

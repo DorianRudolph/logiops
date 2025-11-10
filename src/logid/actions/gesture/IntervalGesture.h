@@ -51,6 +51,8 @@ namespace logid::actions {
         int32_t _interval_pass_count;
         std::shared_ptr<Action> _action;
         config::IntervalGesture& _config;
+        std::list<uint> _hold_keys;
+        bool _hold_keys_pressed;
     private:
     };
 }

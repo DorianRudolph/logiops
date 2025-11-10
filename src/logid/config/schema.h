@@ -147,13 +147,16 @@ namespace logid::config {
         std::optional<std::variant<std::string, uint>> axis;
         std::optional<double> axis_multiplier;
         std::optional<int> haptic_effect;
+        std::optional<std::variant<std::string, uint,
+                std::list<std::variant<uint, std::string>>>> hold_keys;
 
         AxisGesture() : signed_group("mode", "Axis",
-                                     {"threshold", "axis", "axis_multiplier", "haptic_effect"},
+                                     {"threshold", "axis", "axis_multiplier", "haptic_effect", "hold_keys"},
                                      &AxisGesture::threshold,
                                      &AxisGesture::axis,
                                      &AxisGesture::axis_multiplier,
-                                     &AxisGesture::haptic_effect) {}
+                                     &AxisGesture::haptic_effect,
+                                     &AxisGesture::hold_keys) {}
     };
 
     struct IntervalGesture : public signed_group<std::string> {
@@ -162,14 +165,17 @@ namespace logid::config {
         std::optional<BasicAction> action;
         std::optional<int> interval;
         std::optional<int> haptic_effect;
+        std::optional<std::variant<std::string, uint,
+                std::list<std::variant<uint, std::string>>>> hold_keys;
     protected:
         explicit IntervalGesture(const std::string& name) : signed_group(
                 "mode", name,
-                {"threshold", "action", "interval", "haptic_effect"},
+                {"threshold", "action", "interval", "haptic_effect", "hold_keys"},
                 &IntervalGesture::threshold,
                 &IntervalGesture::action,
                 &IntervalGesture::interval,
-                &IntervalGesture::haptic_effect) {}
+                &IntervalGesture::haptic_effect,
+                &IntervalGesture::hold_keys) {}
 
     public:
         IntervalGesture() : IntervalGesture("OnInterval") {}
@@ -184,12 +190,15 @@ namespace logid::config {
         std::optional<int> threshold;
         std::optional<BasicAction> action;
         std::optional<int> haptic_effect;
+        std::optional<std::variant<std::string, uint,
+                std::list<std::variant<uint, std::string>>>> hold_keys;
 
         ReleaseGesture() : signed_group("mode", "OnRelease",
-                                        {"threshold", "action", "haptic_effect"},
+                                        {"threshold", "action", "haptic_effect", "hold_keys"},
                                         &ReleaseGesture::threshold,
                                         &ReleaseGesture::action,
-                                        &ReleaseGesture::haptic_effect) {}
+                                        &ReleaseGesture::haptic_effect,
+                                        &ReleaseGesture::hold_keys) {}
     };
 
     struct ThresholdGesture : public signed_group<std::string> {
@@ -197,12 +206,15 @@ namespace logid::config {
         std::optional<int> threshold;
         std::optional<BasicAction> action;
         std::optional<int> haptic_effect;
+        std::optional<std::variant<std::string, uint,
+                std::list<std::variant<uint, std::string>>>> hold_keys;
 
         ThresholdGesture() : signed_group("mode", "OnThreshold",
-                                          {"threshold", "action", "haptic_effect"},
+                                          {"threshold", "action", "haptic_effect", "hold_keys"},
                                           &ThresholdGesture::threshold,
                                           &ThresholdGesture::action,
-                                          &ThresholdGesture::haptic_effect) {}
+                                          &ThresholdGesture::haptic_effect,
+                                          &ThresholdGesture::hold_keys) {}
     };
 
     struct NoGesture : public signed_group<std::string> {
@@ -228,11 +240,14 @@ namespace logid::config {
         typedef actions::GestureAction action;
         std::optional<map<std::string, Gesture, string_literal_of<keys::direction>,
                 less_caseless<std::string>>> gestures;
+        std::optional<std::variant<std::string, uint,
+                std::list<std::variant<uint, std::string>>>> hold_keys;
 
         GestureAction() : signed_group<std::string>(
                 "type", "Gestures",
-                {"gestures"},
-                &GestureAction::gestures) {}
+                {"gestures", "hold_keys"},
+                &GestureAction::gestures,
+                &GestureAction::hold_keys) {}
     };
 
     typedef std::variant<

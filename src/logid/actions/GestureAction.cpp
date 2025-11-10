@@ -19,6 +19,8 @@
 #include <backend/hidpp20/features/ReprogControls.h>
 #include <util/log.h>
 #include <algorithm>
+#include <Device.h>
+#include <InputDevice.h>
 
 using namespace logid::actions;
 using namespace logid;
@@ -103,6 +105,46 @@ GestureAction::GestureAction(Device* dev, config::GestureAction& config,
             }
         }
     }
+
+    // Parse hold_keys configuration
+    if (_config.hold_keys.has_value()) {
+        auto& config = _config.hold_keys.value();
+        if (std::holds_alternative<std::string>(config)) {
+            const auto& key = std::get<std::string>(config);
+            try {
+                auto code = _device->virtualInput()->toKeyCode(key);
+                _device->virtualInput()->registerKey(code);
+                _hold_keys.emplace_back(code);
+            } catch (InputDevice::InvalidEventCode& e) {
+                logPrintf(WARN, "Invalid hold keycode %s, skipping.", key.c_str());
+            }
+        } else if (std::holds_alternative<uint>(config)) {
+            const auto& key = std::get<uint>(config);
+            _device->virtualInput()->registerKey(key);
+            _hold_keys.emplace_back(key);
+        } else if (std::holds_alternative<
+                std::list<std::variant<uint, std::string>>>(config)) {
+            const auto& keys = std::get<
+                    std::list<std::variant<uint, std::string>>>(config);
+            for (const auto& key: keys) {
+                if (std::holds_alternative<std::string>(key)) {
+                    const auto& key_str = std::get<std::string>(key);
+                    try {
+                        auto code = _device->virtualInput()->toKeyCode(key_str);
+                        _device->virtualInput()->registerKey(code);
+                        _hold_keys.emplace_back(code);
+                    } catch (InputDevice::InvalidEventCode& e) {
+                        logPrintf(WARN, "Invalid hold keycode %s, skipping.",
+                                  key_str.c_str());
+                    }
+                } else if (std::holds_alternative<uint>(key)) {
+                    auto& code = std::get<uint>(key);
+                    _device->virtualInput()->registerKey(code);
+                    _hold_keys.emplace_back(code);
+                }
+            }
+        }
+    }
 }
 
 void GestureAction::press() {
@@ -110,6 +152,11 @@ void GestureAction::press() {
 
     _pressed = true;
     _x = 0, _y = 0;
+
+    // Press and hold the hold_keys
+    for (auto& key: _hold_keys)
+        _device->virtualInput()->pressKey(key);
+
     for (auto& gesture: _gestures)
         gesture.second->press(false);
 }
@@ -146,6 +193,10 @@ void GestureAction::release() {
     if (none_gesture != _gestures.end()) {
         none_gesture->second->release(!threshold_met);
     }
+
+    // Release the hold_keys
+    for (auto& key: _hold_keys)
+        _device->virtualInput()->releaseKey(key);
 }
 
 void GestureAction::move(int16_t x, int16_t y) {
