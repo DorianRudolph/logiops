@@ -1,10 +1,20 @@
-# LogiOps
+# LogiOps (Enhanced Fork)
 
 ![Build Status](https://github.com/PixlOne/logiops/actions/workflows/build-test.yml/badge.svg)
+
+> **Note:** This is an enhanced fork of [PixlOne/logiops](https://github.com/PixlOne/logiops) with additional features for Logitech devices with haptic feedback (e.g., MX Master 4).
 
 This is an unofficial driver for Logitech mice and keyboard.
 
 This is currently only compatible with HID++ \>2.0 devices.
+
+## Additional Features in This Fork
+
+- **Haptic Feedback for Gestures** - Configure haptic effects (0-14) that trigger on gesture actions
+- **Per-Gesture Hold Keys** - Hold modifier keys (like ALT) during specific gestures for advanced shortcuts (e.g., Alt+Tab window switching)
+- **Bug Fixes** - Fixed CycleDPI empty check bug that prevented DPI cycling
+
+For detailed changes and technical implementation, see [CHANGELOG.md](CHANGELOG.md).
 
 ## Configuration
 [Refer to the wiki for details.](https://github.com/PixlOne/logiops/wiki/Configuration)
