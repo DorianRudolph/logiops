@@ -21,6 +21,7 @@
 #include <actions/gesture/ReleaseGesture.h>
 #include <actions/gesture/ThresholdGesture.h>
 #include <actions/gesture/IntervalGesture.h>
+#include <actions/gesture/DualIntervalGesture.h>
 #include <actions/gesture/AxisGesture.h>
 #include <actions/gesture/NullGesture.h>
 #include <ipc_defs.h>
@@ -74,6 +75,8 @@ std::shared_ptr<Gesture> Gesture::makeGesture(
         config = config::AxisGesture();
     } else if (type == IntervalGesture::interface_name) {
         config = config::IntervalGesture();
+    } else if (type == DualIntervalGesture::interface_name) {
+        config = config::DualIntervalGesture();
     } else if (type == ReleaseGesture::interface_name) {
         config = config::ReleaseGesture();
     } else if (type == ThresholdGesture::interface_name) {

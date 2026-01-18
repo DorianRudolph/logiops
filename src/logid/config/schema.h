@@ -41,6 +41,8 @@ namespace logid::actions {
 
     class AxisGesture;
 
+    class DualIntervalGesture;
+
     class IntervalGesture;
 
     class NullGesture;
@@ -183,6 +185,30 @@ namespace logid::config {
         IntervalGesture() : IntervalGesture("OnInterval") {}
     };
 
+    struct DualIntervalGesture : public signed_group<std::string> {
+        typedef actions::DualIntervalGesture gesture;
+        std::optional<int> threshold;
+        std::optional<BasicAction> action_positive;
+        std::optional<BasicAction> action_negative;
+        std::optional<int> interval;
+        std::optional<int> haptic_effect;
+        std::optional<bool> haptic_every_interval;
+        std::optional<std::variant<std::string, uint,
+                std::list<std::variant<uint, std::string>>>> hold_keys;
+
+        DualIntervalGesture() : signed_group(
+                "mode", "OnIntervalDual",
+                {"threshold", "action_positive", "action_negative", "interval",
+                 "haptic_effect", "haptic_every_interval", "hold_keys"},
+                &DualIntervalGesture::threshold,
+                &DualIntervalGesture::action_positive,
+                &DualIntervalGesture::action_negative,
+                &DualIntervalGesture::interval,
+                &DualIntervalGesture::haptic_effect,
+                &DualIntervalGesture::haptic_every_interval,
+                &DualIntervalGesture::hold_keys) {}
+    };
+
     struct FewPixelsGesture : public IntervalGesture {
         FewPixelsGesture() : IntervalGesture("OnFewPixels") {}
     };
@@ -232,6 +258,7 @@ namespace logid::config {
             NoGesture,
             AxisGesture,
             IntervalGesture,
+            DualIntervalGesture,
             FewPixelsGesture,
             ReleaseGesture,
             ThresholdGesture

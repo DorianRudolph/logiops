@@ -16,6 +16,7 @@
  *
  */
 #include <actions/GestureAction.h>
+#include <actions/gesture/DualIntervalGesture.h>
 #include <backend/hidpp20/features/ReprogControls.h>
 #include <util/log.h>
 #include <algorithm>
@@ -204,63 +205,87 @@ void GestureAction::move(int16_t x, int16_t y) {
 
     int32_t new_x = _x + x, new_y = _y + y;
 
+    auto find_dual_interval = [this](Direction negative, Direction positive)
+            -> std::shared_ptr<DualIntervalGesture> {
+        auto negative_it = _gestures.find(negative);
+        if (negative_it != _gestures.end()) {
+            auto dual = std::dynamic_pointer_cast<DualIntervalGesture>(negative_it->second);
+            if (dual)
+                return dual;
+        }
+        auto positive_it = _gestures.find(positive);
+        if (positive_it != _gestures.end())
+            return std::dynamic_pointer_cast<DualIntervalGesture>(positive_it->second);
+        return nullptr;
+    };
+
     if (abs(x) > 0) {
-        if (_x < 0 && new_x >= 0) { // Left -> Origin/Right
-            auto left = _gestures.find(Left);
-            if (left != _gestures.end() && left->second)
-                left->second->move((int16_t) _x);
-            if (new_x) { // Ignore to origin
-                auto right = _gestures.find(Right);
-                if (right != _gestures.end() && right->second)
-                    right->second->move((int16_t) new_x);
-            }
-        } else if (_x > 0 && new_x <= 0) { // Right -> Origin/Left
-            auto right = _gestures.find(Right);
-            if (right != _gestures.end() && right->second)
-                right->second->move((int16_t) -_x);
-            if (new_x) { // Ignore to origin
+        auto dual = find_dual_interval(Left, Right);
+        if (dual) {
+            dual->move(x);
+        } else {
+            if (_x < 0 && new_x >= 0) { // Left -> Origin/Right
                 auto left = _gestures.find(Left);
                 if (left != _gestures.end() && left->second)
-                    left->second->move((int16_t) -new_x);
+                    left->second->move((int16_t) _x);
+                if (new_x) { // Ignore to origin
+                    auto right = _gestures.find(Right);
+                    if (right != _gestures.end() && right->second)
+                        right->second->move((int16_t) new_x);
+                }
+            } else if (_x > 0 && new_x <= 0) { // Right -> Origin/Left
+                auto right = _gestures.find(Right);
+                if (right != _gestures.end() && right->second)
+                    right->second->move((int16_t) -_x);
+                if (new_x) { // Ignore to origin
+                    auto left = _gestures.find(Left);
+                    if (left != _gestures.end() && left->second)
+                        left->second->move((int16_t) -new_x);
+                }
+            } else if (new_x < 0) { // Origin/Left to Left
+                auto left = _gestures.find(Left);
+                if (left != _gestures.end() && left->second)
+                    left->second->move((int16_t) -x);
+            } else if (new_x > 0) { // Origin/Right to Right
+                auto right = _gestures.find(Right);
+                if (right != _gestures.end() && right->second)
+                    right->second->move(x);
             }
-        } else if (new_x < 0) { // Origin/Left to Left
-            auto left = _gestures.find(Left);
-            if (left != _gestures.end() && left->second)
-                left->second->move((int16_t) -x);
-        } else if (new_x > 0) { // Origin/Right to Right
-            auto right = _gestures.find(Right);
-            if (right != _gestures.end() && right->second)
-                right->second->move(x);
         }
     }
 
     if (abs(y) > 0) {
-        if (_y > 0 && new_y <= 0) { // Up -> Origin/Down
-            auto up = _gestures.find(Up);
-            if (up != _gestures.end() && up->second)
-                up->second->move((int16_t) _y);
-            if (new_y) { // Ignore to origin
-                auto down = _gestures.find(Down);
-                if (down != _gestures.end() && down->second)
-                    down->second->move((int16_t) new_y);
-            }
-        } else if (_y < 0 && new_y >= 0) { // Down -> Origin/Up
-            auto down = _gestures.find(Down);
-            if (down != _gestures.end() && down->second)
-                down->second->move((int16_t) -_y);
-            if (new_y) { // Ignore to origin
+        auto dual = find_dual_interval(Up, Down);
+        if (dual) {
+            dual->move(y);
+        } else {
+            if (_y > 0 && new_y <= 0) { // Up -> Origin/Down
                 auto up = _gestures.find(Up);
                 if (up != _gestures.end() && up->second)
-                    up->second->move((int16_t) -new_y);
+                    up->second->move((int16_t) _y);
+                if (new_y) { // Ignore to origin
+                    auto down = _gestures.find(Down);
+                    if (down != _gestures.end() && down->second)
+                        down->second->move((int16_t) new_y);
+                }
+            } else if (_y < 0 && new_y >= 0) { // Down -> Origin/Up
+                auto down = _gestures.find(Down);
+                if (down != _gestures.end() && down->second)
+                    down->second->move((int16_t) -_y);
+                if (new_y) { // Ignore to origin
+                    auto up = _gestures.find(Up);
+                    if (up != _gestures.end() && up->second)
+                        up->second->move((int16_t) -new_y);
+                }
+            } else if (new_y < 0) { // Origin/Up to Up
+                auto up = _gestures.find(Up);
+                if (up != _gestures.end() && up->second)
+                    up->second->move((int16_t) -y);
+            } else if (new_y > 0) {// Origin/Down to Down
+                auto down = _gestures.find(Down);
+                if (down != _gestures.end() && down->second)
+                    down->second->move(y);
             }
-        } else if (new_y < 0) { // Origin/Up to Up
-            auto up = _gestures.find(Up);
-            if (up != _gestures.end() && up->second)
-                up->second->move((int16_t) -y);
-        } else if (new_y > 0) {// Origin/Down to Down
-            auto down = _gestures.find(Down);
-            if (down != _gestures.end() && down->second)
-                down->second->move(y);
         }
     }
 

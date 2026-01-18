@@ -40,6 +40,7 @@ add_executable(logid
         actions/gesture/ReleaseGesture.cpp
         actions/gesture/ThresholdGesture.cpp
         actions/gesture/IntervalGesture.cpp
+        actions/gesture/DualIntervalGesture.cpp
         actions/gesture/AxisGesture.cpp
         actions/gesture/NullGesture.cpp
         backend/Error.cpp
