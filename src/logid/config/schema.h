@@ -165,16 +165,18 @@ namespace logid::config {
         std::optional<BasicAction> action;
         std::optional<int> interval;
         std::optional<int> haptic_effect;
+        std::optional<bool> haptic_every_interval;
         std::optional<std::variant<std::string, uint,
                 std::list<std::variant<uint, std::string>>>> hold_keys;
     protected:
         explicit IntervalGesture(const std::string& name) : signed_group(
                 "mode", name,
-                {"threshold", "action", "interval", "haptic_effect", "hold_keys"},
+                {"threshold", "action", "interval", "haptic_effect", "haptic_every_interval", "hold_keys"},
                 &IntervalGesture::threshold,
                 &IntervalGesture::action,
                 &IntervalGesture::interval,
                 &IntervalGesture::haptic_effect,
+                &IntervalGesture::haptic_every_interval,
                 &IntervalGesture::hold_keys) {}
 
     public:

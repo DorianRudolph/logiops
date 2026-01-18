@@ -135,8 +135,9 @@ void IntervalGesture::move(int16_t axis) {
             _action->release();
         }
         // Play haptic asynchronously after action to avoid blocking
-        // Only on the first interval to avoid interrupting continuous actions
-        if (_interval_pass_count == 0 && _config.haptic_effect.has_value()) {
+        // Only on the first interval unless haptic_every_interval is enabled
+        if (_config.haptic_effect.has_value() &&
+                (_interval_pass_count == 0 || _config.haptic_every_interval.value_or(false))) {
             auto effect = _config.haptic_effect.value();
             run_task([device = _device, effect] {
                 try {
